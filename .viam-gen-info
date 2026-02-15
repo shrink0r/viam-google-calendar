@@ -1,0 +1,13 @@
+{
+  "module_name": "google-calendar",
+  "visibility": "",
+  "namespace": "shrink0r",
+  "language": "python",
+  "resource_type": "service",
+  "resource_subtype": "generic",
+  "model_name": "google-calendar",
+  "initialize_git": false,
+  "generator_version": "0.1.0",
+  "generated_on": "2026-02-15T10:39:58.827962Z",
+  "module_readme_link": "README.md"
+}
