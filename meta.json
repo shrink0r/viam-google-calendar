@@ -6,7 +6,7 @@
   "description": "Modular generic service: google-calendar",
   "applications": null,
   "markdown_link": "README.md",
-  "entrypoint": "./run.sh",
+  "entrypoint": "./dist/main",
   "first_run": "",
   "build": {
     "build": "./build.sh",
@@ -15,8 +15,7 @@
     "arch": [
       "linux/amd64",
       "linux/arm64",
-      "darwin/arm64",
-      "windows/amd64"
+      "darwin/arm64"
     ]
   }
 }
