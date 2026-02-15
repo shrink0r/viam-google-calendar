@@ -10,7 +10,12 @@ PYTHON="$VENV_NAME/bin/python"
 python3 -m venv "$VENV_NAME"
 $PYTHON -m pip install -U pip setuptools wheel -qq
 $PYTHON -m pip install -r requirements.txt -qq
-$PYTHON -m pip install pyinstaller -U -qq
+$PYTHON -m pip install -U pyinstaller -qq
+
+# Clean PyInstaller artifacts
+rm -f main.spec
+rm -rf build dist
+mkdir -p dist
 
 # Build onefile binary
 $PYTHON -m PyInstaller \
@@ -31,12 +36,14 @@ $PYTHON -m PyInstaller \
   --copy-metadata uritemplate \
   src/main.py
 
-# Pick correct output name (Windows builds produce main.exe)
-BIN="./dist/main"
-if [ -f "./dist/main.exe" ]; then
-  BIN="./dist/main.exe"
-fi
+# Stage files for registry artifact at archive root
+STAGE="dist/stage"
+mkdir -p "$STAGE"
+cp meta.json "$STAGE/meta.json"
 
-# Package registry artifact
-mkdir -p dist
-tar -czvf dist/archive.tar.gz meta.json "$BIN"
+BIN="./dist/main"
+[ -f "./dist/main.exe" ] && BIN="./dist/main.exe"
+cp "$BIN" "$STAGE/$(basename "$BIN")"
+
+# Create registry artifact with meta.json at root
+tar -czvf dist/archive.tar.gz -C "$STAGE" .

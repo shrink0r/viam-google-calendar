@@ -1,6 +1,6 @@
 import asyncio
 from viam.module.module import Module
-from .models.google_calendar import GoogleCalendar
+from models.google_calendar import GoogleCalendar
 
 
 if __name__ == "__main__":
