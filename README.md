@@ -1,6 +1,6 @@
 # Module google-calendar 
 
-Provide a description of the purpose of the module and any relevant information.
+Google calendar module for the viam robotics platform.
 
 ## Models
 
