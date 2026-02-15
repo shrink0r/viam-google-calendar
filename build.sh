@@ -36,11 +36,8 @@ $PYTHON -m PyInstaller \
   --copy-metadata uritemplate \
   src/main.py
 
-# Stage files for registry artifact at archive root
-cp meta.json "dist/meta.json"
-
 BIN="./dist/main"
 [ -f "./dist/main.exe" ] && BIN="./dist/main.exe"
 
 # Create registry artifact with meta.json at root
-tar -czvf dist/archive.tar.gz "dist/main" "dist/meta.json"
+tar -czvf dist/archive.tar.gz "dist/main" "meta.json"
