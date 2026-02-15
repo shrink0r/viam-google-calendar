@@ -1,8 +1,8 @@
 {
   "$schema": "https://dl.viam.dev/module.schema.json",
   "module_id": "shrink0r:google-calendar",
-  "visibility": "private",
-  "url": "",
+  "visibility": "public",
+  "url": "https://github.com/shrink0r/viam-google-calendar",
   "description": "Modular generic service: google-calendar",
   "applications": null,
   "markdown_link": "README.md",
