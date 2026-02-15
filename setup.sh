@@ -1,41 +1,69 @@
 #!/bin/sh
-cd `dirname $0`
+set -eu
 
-# Create a virtual environment to run our code
-VENV_NAME="venv"
+cd "$(dirname "$0")"
+
+VENV_NAME="${VENV_NAME:-venv}"
 PYTHON="$VENV_NAME/bin/python"
-ENV_ERROR="This module requires Python >=3.10, pip, and virtualenv to be installed."
+REQ_FILE="${REQ_FILE:-requirements.txt}"
 
-if ! python3 -m venv $VENV_NAME >/dev/null 2>&1; then
-    echo "Failed to create virtualenv."
-    if command -v apt-get >/dev/null; then
-        echo "Detected Debian/Ubuntu, attempting to install python3-venv automatically."
-        SUDO="sudo"
-        if ! command -v $SUDO >/dev/null; then
-            SUDO=""
-        fi
-		if ! apt info python3-venv >/dev/null 2>&1; then
-			echo "Package info not found, trying apt update"
-			$SUDO apt -qq update >/dev/null
-		fi
-        $SUDO apt install -qqy python3-venv >/dev/null 2>&1
-        if ! python3 -m venv $VENV_NAME >/dev/null 2>&1; then
-            echo $ENV_ERROR >&2
-            exit 1
-        fi
-    else
-        echo $ENV_ERROR >&2
-        exit 1
-    fi
+ENV_ERROR="This module requires Python >= 3.10 and python3-venv (or equivalent) to be installed."
+
+# --- Check Python version (>= 3.10) ---
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "$ENV_ERROR" >&2
+  exit 1
 fi
 
-# remove -U if viam-sdk should not be upgraded whenever possible
-# -qq suppresses extraneous output from pip
-echo "Virtualenv found/created. Installing/upgrading Python packages..."
-if ! [ -f .installed ]; then
-    if ! $PYTHON -m pip install -r requirements.txt -Uqq; then
-        exit 1
-    else
-        touch .installed
-    fi
+PY_OK="$(python3 -c 'import sys; print(int(sys.version_info >= (3,10)))' 2>/dev/null || echo 0)"
+if [ "$PY_OK" != "1" ]; then
+  echo "$ENV_ERROR" >&2
+  python3 -V >&2 || true
+  exit 1
+fi
+
+# --- Create venv if missing ---
+if [ ! -x "$PYTHON" ]; then
+  if ! python3 -m venv "$VENV_NAME" >/dev/null 2>&1; then
+    echo "Failed to create virtualenv. You may need to install python3-venv." >&2
+    echo "$ENV_ERROR" >&2
+    exit 1
+  fi
+fi
+
+# --- Compute a fingerprint so we only reinstall when inputs change ---
+# Uses sha256sum if available, else falls back to shasum; if neither exist, always install.
+fingerprint() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    echo "NOHASH"
+  fi
+}
+
+REQ_HASH="$(fingerprint "$REQ_FILE")"
+PY_VER="$($PYTHON -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]}")')"
+STAMP_FILE="$VENV_NAME/.deps_stamp"
+NEW_STAMP="py=$PY_VER req=$REQ_HASH"
+
+OLD_STAMP=""
+if [ -f "$STAMP_FILE" ]; then
+  OLD_STAMP="$(cat "$STAMP_FILE" 2>/dev/null || true)"
+fi
+
+# --- Install deps if needed ---
+if [ "$REQ_HASH" = "NOHASH" ] || [ "$NEW_STAMP" != "$OLD_STAMP" ]; then
+  echo "Installing Python dependencies into $VENV_NAME (python $PY_VER)..."
+
+  # Ensure pip tooling is present and current-ish (quietly)
+  $PYTHON -m pip install -U pip setuptools wheel -qq
+
+  # Install runtime deps; pip is idempotent and will skip already-satisfied wheels.
+  $PYTHON -m pip install -r "$REQ_FILE" -qq
+
+  echo "$NEW_STAMP" > "$STAMP_FILE"
+else
+  echo "Dependencies already up to date (stamp match)."
 fi
