@@ -37,13 +37,10 @@ $PYTHON -m PyInstaller \
   src/main.py
 
 # Stage files for registry artifact at archive root
-STAGE="dist/stage"
-mkdir -p "$STAGE"
-cp meta.json "$STAGE/meta.json"
+cp meta.json "dist/meta.json"
 
 BIN="./dist/main"
 [ -f "./dist/main.exe" ] && BIN="./dist/main.exe"
-cp "$BIN" "$STAGE/$(basename "$BIN")"
 
 # Create registry artifact with meta.json at root
-tar -czvf dist/archive.tar.gz -C "$STAGE" .
+tar -czvf dist/archive.tar.gz "dist/main" "dist/meta.json"
